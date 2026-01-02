@@ -1,0 +1,14 @@
+#compdef totp
+
+_totp_entries() {
+  local base=$HOME/.totp/store
+  [[ -d $base ]] || return
+  find $base -type f -name '*.gpg' \
+    | sed "s|$base/||" \
+    | sed 's|\.gpg$||'
+}
+
+_arguments \
+  '1:command:(add code del rm list ls tree config)' \
+  '2:entry:(_totp_entries)'
+

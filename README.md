@@ -82,6 +82,24 @@ totp rm aws
 totp config --recipient you@example.com
 ```
 
+### Autocompletions
+
+Just clone the repository, or grab the completions from [here](https://github.com/Dark-Kernel/totp-cli/tree/master/completions)
+
+```sh 
+# bash
+sudo cp completions/totp.bash /etc/bash_completion.d/totp
+
+# fish
+mkdir -p ~/.config/fish/completions
+cp completions/totp.fish ~/.config/fish/completions/
+
+# zsh
+sudo cp completions/_totp /usr/share/zsh/site-functions/
+```
+
+
+
 ## Storage
 
 ```
