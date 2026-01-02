@@ -1,0 +1,59 @@
+name: release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        arch: [amd64]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install deps
+        run: pip install pyinstaller
+
+      - name: Build binary
+        run: |
+          pyinstaller --onefile totp
+          mv dist/totp totp-linux-${{ matrix.arch }}
+
+      - name: Create install script
+        run: |
+          cat > install.sh <<'EOF'
+          #!/bin/sh
+          set -e
+
+          BIN=totp
+          URL=https://github.com/${GITHUB_REPOSITORY}/releases/latest/download/totp-linux-amd64
+
+          if [ -w /usr/local/bin ]; then
+            DEST=/usr/local/bin
+          else
+            DEST=$HOME/.local/bin
+            mkdir -p "$DEST"
+          fi
+
+          curl -fsSL "$URL" -o "$DEST/$BIN"
+          chmod +x "$DEST/$BIN"
+          echo "installed to $DEST/$BIN"
+          EOF
+          chmod +x install.sh
+
+      - name: Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            totp-linux-amd64
+            install.sh
