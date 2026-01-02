@@ -3,9 +3,6 @@
 A command-line tool for generating and validating TOTP (Time-based One-time Password) codes for MFA (Multi-Factor Authentication).
 
 
-```md
-# totp
-
 Minimal, offline, GPG-backed TOTP CLI authenticator.
 
 - RFC 6238 compliant
@@ -14,7 +11,6 @@ Minimal, offline, GPG-backed TOTP CLI authenticator.
 - Secrets encrypted with your GPG key
 - Fully interoperable with Google Authenticator, AWS, GitHub, etc.
 
----
 
 ## Requirements
 
@@ -22,7 +18,6 @@ Minimal, offline, GPG-backed TOTP CLI authenticator.
 - gpg
 - (optional) wl-copy or xclip for clipboard support
 
----
 
 ## Install (binary)
 
@@ -46,7 +41,6 @@ On first run:
 * Prompts once to select default recipient
 * Stores encrypted secret
 
----
 
 ## Commands
 
@@ -84,8 +78,6 @@ totp rm aws
 totp config --recipient you@example.com
 ```
 
----
-
 ## Storage
 
 ```
@@ -98,7 +90,6 @@ totp config --recipient you@example.com
 
 Secrets are never stored in plaintext.
 
----
 
 ## Security model
 
