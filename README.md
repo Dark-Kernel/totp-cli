@@ -1,0 +1,114 @@
+## TOTP CLI
+
+A command-line tool for generating and validating TOTP (Time-based One-time Password) codes for MFA (Multi-Factor Authentication).
+
+
+```md
+# totp
+
+Minimal, offline, GPG-backed TOTP CLI authenticator.
+
+- RFC 6238 compliant
+- No cloud
+- No GUI
+- Secrets encrypted with your GPG key
+- Fully interoperable with Google Authenticator, AWS, GitHub, etc.
+
+---
+
+## Requirements
+
+- Python 3.8+
+- gpg
+- (optional) wl-copy or xclip for clipboard support
+
+---
+
+## Install (binary)
+
+```sh
+curl -fsSL https://github.com/Dark-Kernel/totp-cli/releases/latest/download/install.sh | sh
+````
+
+Installs `totp` into `/usr/local/bin` or `$HOME/.local/bin`.
+
+---
+
+## First use
+
+```sh
+totp add aws
+```
+
+On first run:
+
+* Lists available GPG secret keys
+* Prompts once to select default recipient
+* Stores encrypted secret
+
+---
+
+## Commands
+
+### Add secret
+
+```sh
+totp add aws
+totp add github --secret JBSWY3DPEHPK3PXP
+```
+
+### Generate code
+
+```sh
+totp code aws
+totp code aws --clip # copy to clipboard
+```
+
+### List entries
+
+```sh
+totp list
+totp ls
+```
+
+### Remove entry
+
+```sh
+totp del aws
+totp rm aws
+```
+
+### Change default GPG recipient
+
+```sh
+totp config --recipient you@example.com
+```
+
+---
+
+## Storage
+
+```
+~/.totp/
+├── store/
+│   ├── aws.gpg
+│   └── github.gpg
+└── config
+```
+
+Secrets are never stored in plaintext.
+
+---
+
+## Security model
+
+* Disk compromise: safe
+* Backup leaks: safe
+* Session compromise: not solvable by MFA tools
+* Loss of GPG private key = loss of MFA access
+
+---
+
+## License
+
+[MIT](https://github.com/Dark-Kernel/totp-cli/blob/master/LICENSE)
