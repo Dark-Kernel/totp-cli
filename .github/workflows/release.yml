@@ -26,7 +26,7 @@ jobs:
 
       - name: Build binary
         run: |
-          pyinstaller --onefile totp
+          pyinstaller --onefile main.py -n totp
           mv dist/totp totp-linux-${{ matrix.arch }}
 
       - name: Create install script
