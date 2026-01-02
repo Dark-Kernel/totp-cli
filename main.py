@@ -89,6 +89,7 @@ def read_secret(args):
 def store_secret(name, secret, gpg_recipient):
     STORE.mkdir(parents=True, exist_ok=True)
     path = STORE / f"{name}.gpg"
+    path.parent.mkdir(parents=True, exist_ok=True)
 
     p = subprocess.run(
         ["gpg", "-e", "-r", gpg_recipient, "-o", str(path)],
@@ -98,6 +99,9 @@ def store_secret(name, secret, gpg_recipient):
 
 def load_secret(name):
     path = STORE / f"{name}.gpg"
+    if not path.exists():
+        sys.exit("entry not found")
+
     p = subprocess.run(
         ["gpg", "-dq", str(path)],
         capture_output=True,
@@ -113,7 +117,14 @@ def cmd_add(args):
 
 def cmd_del(args):
     path = STORE / f"{args.name}.gpg"
+    if not path.exists():
+        sys.exit("entry not found")
     path.unlink()
+    parent = path.parent
+    while parent != STORE and not any(parent.iterdir()):
+        parent.rmdir()
+        parent = parent.parent
+
 
 def cmd_config(args):
     set_default_recipient(args.recipient)
@@ -121,24 +132,46 @@ def cmd_config(args):
 
 def cmd_code(args):
     secret = load_secret(args.name)
-    print(totp(secret, args.digits, args.period))
+    code = totp(secret, args.digits, args.period)
 
-def cmd_code_clipboard(args):
-    secret = load_secret(args.name)
-    if not sys.stdout.isatty():
-        return
-    # check wayland or xorg
-    if os.environ.get("WAYLAND_DISPLAY"):
-        subprocess.run(["wl-copy", totp(secret, args.digits, args.period)])
+    if args.clip:
+        if os.environ.get("WAYLAND_DISPLAY"):
+            subprocess.run(["wl-copy"], input=code.encode(), check=True)
+        else:
+            subprocess.run(
+                ["xclip", "-selection", "clipboard"],
+                input=code.encode(),
+                check=True
+            )
     else:
-        subprocess.run(["xclip", "-selection", "clipboard"], input=totp(secret, args.digits, args.period).encode())
+        print(code)
+
 
 
 def cmd_list(_args):
     if not STORE.exists():
         return
-    for f in sorted(STORE.glob("*.gpg")):
-        print(f.stem)
+    for f in sorted(STORE.rglob("*.gpg")):
+        print(f.relative_to(STORE).with_suffix(""))
+
+
+def cmd_tree(_args):
+    if STORE.exists():
+        print("store")
+        print_tree(STORE)
+
+def print_tree(root, prefix=""):
+    entries = sorted(root.iterdir(), key=lambda p: (p.is_file(), p.name))
+    for i, path in enumerate(entries):
+        connector = "└── " if i == len(entries) - 1 else "├── "
+        name = path.name.removesuffix(".gpg")
+        print(prefix + connector + name)
+
+        if path.is_dir():
+            extension = "    " if i == len(entries) - 1 else "│   "
+            print_tree(path, prefix + extension)
+
+
 
 
 def totp(secret, digits=6, period=30, algo=hashlib.sha1):
@@ -173,9 +206,8 @@ def main():
     p_code.add_argument("name")
     p_code.add_argument("--digits", type=int, default=6)
     p_code.add_argument("--period", type=int, default=30)
-    p_code.set_defaults(func=cmd_code)
     p_code.add_argument("--clip", action="store_true")
-    p_code.set_defaults(func=cmd_code_clipboard)
+    p_code.set_defaults(func=cmd_code)
 
 
     # del
@@ -200,6 +232,11 @@ def main():
     p_cfg = sub.add_parser("config")
     p_cfg.add_argument("--recipient", required=True)
     p_cfg.set_defaults(func=cmd_config)
+
+    # tree
+    p_tree = sub.add_parser("tree")
+    p_tree.set_defaults(func=cmd_tree)
+
 
     args = parser.parse_args()
     args.func(args)

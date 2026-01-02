@@ -49,6 +49,7 @@ On first run:
 ```sh
 totp add aws
 totp add github --secret JBSWY3DPEHPK3PXP
+totp add gmail/email@gmail.com
 ```
 
 ### Generate code
@@ -63,7 +64,10 @@ totp code aws --clip # copy to clipboard
 ```sh
 totp list
 totp ls
+totp tree
 ```
+
+
 
 ### Remove entry
 
