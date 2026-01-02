@@ -39,7 +39,7 @@ jobs:
           set -e
 
           BIN=totp
-          URL=https://github.com/${{ GITHUB_REPOSITORY }}/releases/latest/download/totp-linux-amd64
+          URL=https://github.com/${{ github.repository }}/releases/latest/download/totp-linux-amd64
 
           if [ -w /usr/local/bin ]; then
             DEST=/usr/local/bin
