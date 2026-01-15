@@ -64,9 +64,9 @@ def resolve_recipient(args):
     recipient = select_recipient_interactive()
     set_default_recipient(recipient)
     # initiialize git
-    # check for .git 
-    if not os.path.isdir(os.path.join(BASE_DIR, ".git")):
-        cmd_git(["init"])
+    git_init_if_needed()
+    # if not os.path.isdir(os.path.join(BASE_DIR, ".git")):
+    #     cmd_git(["init"])
 
     return recipient
 
@@ -84,6 +84,20 @@ def set_default_recipient(recipient):
     CONFIG.parent.mkdir(parents=True, exist_ok=True)
     CONFIG.write_text(f"recipient={recipient}\n")
 
+def git_init_if_needed():
+    if not os.path.isdir(os.path.join(BASE_DIR, ".git")):
+        subprocess.run(
+            ["git", "-C", BASE_DIR, "init"],
+            check=True
+        )
+        subprocess.run(
+            ["git", "-C", BASE_DIR, "add", "."],
+            check=True
+        )
+        subprocess.run(
+            ["git", "-C", BASE_DIR, "commit", "-m", "init"],
+            check=True
+        )
 
 def read_secret(args):
     if args.secret:
@@ -165,6 +179,9 @@ def cmd_code(args):
     if args.clip:
         if os.environ.get("WAYLAND_DISPLAY"):
             subprocess.run(["wl-copy"], input=code.encode(), check=True)
+        # check if in termux
+        elif os.environ.get("TERMUX_VERSION"):
+            subprocess.run(["termux-clipboard-set", code], check=True)
         else:
             subprocess.run(
                 ["xclip", "-selection", "clipboard"],
@@ -230,7 +247,10 @@ def cmd_git(args):
     git_dir = os.path.join(base, ".git")
 
     if not os.path.isdir(git_dir):
-        if args.git_args and args.git_args[0] not in ("init", "clone"):
+        if args.git_args and args.git_args[0] == "init":
+            git_init_if_needed()
+            return
+        else:
             print("Git repo not initialized. Run: totp git init", file=sys.stderr)
             sys.exit(1)
 
