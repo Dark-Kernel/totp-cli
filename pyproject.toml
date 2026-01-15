@@ -4,4 +4,6 @@ version = "0.1.0"
 description = "A command-line tool for generating and validating TOTP (Time-based One-time Password) codes for MFA (Multi-Factor Authentication)."
 readme = "README.md"
 requires-python = ">=3.13"
-dependencies = []
+dependencies = [
+    "pyinstaller>=6.17.0",
+]
