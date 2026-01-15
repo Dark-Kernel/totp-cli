@@ -40,6 +40,9 @@ On first run:
 * Lists available GPG secret keys
 * Prompts once to select default recipient
 * Stores encrypted secret
+* Creates a config file in `~/.totp/config`
+* Initilizes git repo in `~/.totp`
+
 
 
 ## Commands
@@ -80,6 +83,12 @@ totp rm aws
 
 ```sh
 totp config --recipient you@example.com
+```
+
+### Git integration
+
+```sh
+totp git <command>
 ```
 
 ### Autocompletions

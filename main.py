@@ -16,6 +16,7 @@ STORE = Path.home() / ".totp" / "store"
 
 CONFIG = Path.home() / ".totp" / "config"
 
+BASE_DIR = Path.home() / ".totp"
 
 def list_gpg_recipients():
     p = subprocess.run(
@@ -62,6 +63,11 @@ def resolve_recipient(args):
 
     recipient = select_recipient_interactive()
     set_default_recipient(recipient)
+    # initiialize git
+    # check for .git 
+    if not os.path.isdir(os.path.join(BASE_DIR, ".git")):
+        cmd_git(["init"])
+
     return recipient
 
 
@@ -109,17 +115,39 @@ def load_secret(name):
     )
     return p.stdout.decode().strip()
 
+
+
 def cmd_add(args):
+    update=False
     secret = read_secret(args)
     recipient = resolve_recipient(args)
+    rel_path = (STORE / f"{args.name}.gpg").relative_to(BASE_DIR)
+    if (STORE / f"{args.name}.gpg").exists():
+        update=True
     store_secret(args.name, secret, recipient)
+    if update:
+        git_autocommit(
+            [str(rel_path)],
+            f"totp: update {args.name}"
+        )
+    else:
+        git_autocommit(
+            [str(rel_path)],
+            f"totp: add {args.name}"
+        )
+
     print(args.name)
 
 def cmd_del(args):
     path = STORE / f"{args.name}.gpg"
     if not path.exists():
         sys.exit("entry not found")
+    rel_path = path.relative_to(BASE_DIR)
     path.unlink()
+    git_autocommit(
+        [str(rel_path)],
+        f"totp: remove {args.name}"
+    )
     parent = path.parent
     while parent != STORE and not any(parent.iterdir()):
         parent.rmdir()
@@ -191,6 +219,40 @@ def totp(secret, digits=6, period=30, algo=hashlib.sha1):
 
     return str(code % (10 ** digits)).zfill(digits)
 
+
+def cmd_git(args):
+    base = BASE_DIR
+
+    if not os.path.isdir(base):
+        print("~/.totp does not exist", file=sys.stderr)
+        sys.exit(1)
+
+    git_dir = os.path.join(base, ".git")
+
+    if not os.path.isdir(git_dir):
+        if args.git_args and args.git_args[0] not in ("init", "clone"):
+            print("Git repo not initialized. Run: totp git init", file=sys.stderr)
+            sys.exit(1)
+
+    cmd = ["git", "-C", base] + args.git_args
+    os.execvp("git", cmd)
+
+
+def git_autocommit(paths, message):
+    if not os.path.isdir(os.path.join(BASE_DIR, ".git")):
+        return
+
+    subprocess.run(
+        ["git", "-C", BASE_DIR, "add", "--"] + paths,
+        check=True
+    )
+    subprocess.run(
+        ["git", "-C", BASE_DIR, "commit", "-m", message],
+        check=True
+    )
+
+
+
 def main():
     #structure
     # totp add aws-root
@@ -242,6 +304,11 @@ def main():
     # tree
     p_tree = sub.add_parser("tree")
     p_tree.set_defaults(func=cmd_tree)
+    
+    # git
+    p_git = sub.add_parser("git")
+    p_git.add_argument("git_args", nargs=argparse.REMAINDER)
+    p_git.set_defaults(func=cmd_git)
 
 
     args = parser.parse_args()
