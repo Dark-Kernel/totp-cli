@@ -173,9 +173,15 @@ def print_tree(root, prefix=""):
 
 
 
+def decode_base32(secret: str) -> bytes:
+    s = secret.replace(" ", "").upper().rstrip("=")
+    padding = "=" * ((8 - len(s) % 8) % 8)
+    return base64.b32decode(s + padding, casefold=True)
+
+
 
 def totp(secret, digits=6, period=30, algo=hashlib.sha1):
-    key = base64.b32decode(secret.upper(), casefold=True)
+    key = decode_base32(secret)
     counter = int(time.time() // period)
     msg = struct.pack(">Q", counter)
 
