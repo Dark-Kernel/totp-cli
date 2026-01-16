@@ -127,6 +127,11 @@ def load_secret(name):
     return p.stdout.decode().strip()
 
 
+def totp_init():
+    if not STORE.exists():
+        STORE.mkdir(parents=True, exist_ok=True)
+    git_init_if_needed()
+
 
 def cmd_add(args):
     git_init_if_needed()
