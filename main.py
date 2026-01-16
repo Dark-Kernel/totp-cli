@@ -63,10 +63,6 @@ def resolve_recipient(args):
 
     recipient = select_recipient_interactive()
     set_default_recipient(recipient)
-    # initiialize git
-    #git_init_if_needed()
-    # if not os.path.isdir(os.path.join(BASE_DIR, ".git")):
-    #     cmd_git(["init"])
 
     return recipient
 
@@ -85,19 +81,20 @@ def set_default_recipient(recipient):
     CONFIG.write_text(f"recipient={recipient}\n")
 
 def git_init_if_needed():
+    CONFIG.parent.mkdir(parents=True, exist_ok=True)
     if not os.path.isdir(os.path.join(BASE_DIR, ".git")):
         subprocess.run(
             ["git", "-C", BASE_DIR, "init"],
             check=True
         )
-        subprocess.run(
-            ["git", "-C", BASE_DIR, "add", "."],
-            check=True
-        )
-        subprocess.run(
-            ["git", "-C", BASE_DIR, "commit", "-m", "init"],
-            check=True
-        )
+        # subprocess.run(
+        #     ["git", "-C", BASE_DIR, "add", "."],
+        #     check=True
+        # )
+        # subprocess.run(
+        #     ["git", "-C", BASE_DIR, "commit", "-m", "init"],
+        #     check=True
+        # )
 
 def read_secret(args):
     if args.secret:
@@ -219,6 +216,23 @@ def print_tree(root, prefix=""):
             extension = "    " if i == len(entries) - 1 else "│   "
             print_tree(path, prefix + extension)
 
+def cmd_show(args):
+    secret = load_secret(args.name)
+    print(secret)
+
+def cmd_export(_args):
+    if not STORE.exists():
+        return
+    for path in sorted(STORE.rglob("*.gpg")):
+        name = path.relative_to(STORE).with_suffix("")
+        secret = subprocess.run(
+            ["gpg", "-dq", str(path)],
+            capture_output=True,
+            check=True
+        ).stdout.decode().strip()
+
+        print(f"{name} {secret}")
+
 
 
 def decode_base32(secret: str) -> bytes:
@@ -332,6 +346,17 @@ def main():
     p_git = sub.add_parser("git")
     p_git.add_argument("git_args", nargs=argparse.REMAINDER)
     p_git.set_defaults(func=cmd_git)
+
+    # show
+    p_show = sub.add_parser("show")
+    p_show.add_argument("name")
+    p_show.set_defaults(func=cmd_show)
+
+    # export
+    p_export = sub.add_parser("export")
+    p_export.set_defaults(func=cmd_export)
+
+
 
 
     args = parser.parse_args()
