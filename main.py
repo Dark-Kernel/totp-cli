@@ -64,7 +64,7 @@ def resolve_recipient(args):
     recipient = select_recipient_interactive()
     set_default_recipient(recipient)
     # initiialize git
-    git_init_if_needed()
+    #git_init_if_needed()
     # if not os.path.isdir(os.path.join(BASE_DIR, ".git")):
     #     cmd_git(["init"])
 
@@ -132,6 +132,7 @@ def load_secret(name):
 
 
 def cmd_add(args):
+    git_init_if_needed()
     update=False
     secret = read_secret(args)
     recipient = resolve_recipient(args)
@@ -153,6 +154,7 @@ def cmd_add(args):
     print(args.name)
 
 def cmd_del(args):
+    git_init_if_needed()
     path = STORE / f"{args.name}.gpg"
     if not path.exists():
         sys.exit("entry not found")
@@ -169,6 +171,7 @@ def cmd_del(args):
 
 
 def cmd_config(args):
+    git_init_if_needed()
     set_default_recipient(args.recipient)
     print("ok")
 
